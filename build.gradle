@@ -2,6 +2,7 @@ plugins {
     id 'java'
     id 'java-library'
     id 'maven-publish'
+    id 'signing'
 }
 
 group = 'kr.sharenshare.utils'
@@ -10,6 +11,9 @@ version = '1.0.0'
 java {
     sourceCompatibility = JavaVersion.VERSION_1_8
     targetCompatibility = JavaVersion.VERSION_1_8
+
+    withJavadocJar()
+    withSourcesJar()
 }
 
 repositories {
@@ -28,4 +32,70 @@ test {
 
 tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'
+}
+
+tasks.withType(Javadoc) {
+    options.encoding = 'UTF-8'
+    options.charSet = 'UTF-8'
+    options.docEncoding = 'UTF-8'
+    options.addStringOption('Xdoclint:none', '-quiet')
+}
+
+// Maven Publishing 설정
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+
+            groupId = 'kr.sharenshare.utils'
+            artifactId = 'es-hangul-java'
+            version = '1.0.0'
+
+            pom {
+                name = 'es-hangul-java'
+                description = '한글 처리 유틸리티 라이브러리 - es-hangul의 Java 포팅'
+                url = 'https://github.com/kr-sharenshare/es-hangul-java'
+
+                licenses {
+                    license {
+                        name = 'MIT License'
+                        url = 'https://opensource.org/licenses/MIT'
+                    }
+                }
+
+                developers {
+                    developer {
+                        id = 'duveen'
+                        name = 'duveen'
+                        email = 'duveen@duveen.me'
+                    }
+                }
+
+                scm {
+                    connection = 'scm:git:git://github.com/kr-sharenshare/es-hangul-java.git'
+                    developerConnection = 'scm:git:ssh://github.com/kr-sharenshare/es-hangul-java.git'
+                    url = 'https://github.com/kr-sharenshare/es-hangul-java'
+                }
+            }
+        }
+    }
+
+    repositories {
+        maven {
+            name = "ossrh-staging-api"
+            url = uri("https://ossrh-staging-api.central.sonatype.com/service/local/staging/deploy/maven2/")
+            credentials {
+                username = findProperty("sonatypeUsername") ?: System.getenv("SONATYPE_USERNAME")
+                password = findProperty("sonatypePassword") ?: System.getenv("SONATYPE_PASSWORD")
+            }
+        }
+    }
+}
+
+// GPG 서명 설정
+signing {
+    required { !version.endsWith('SNAPSHOT') }
+    sign publishing.publications.mavenJava
+
+    useGpgCmd()
 }
